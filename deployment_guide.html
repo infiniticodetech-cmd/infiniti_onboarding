@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Infiniti Onboarding Portal - Supabase Deployment Guide</title>
+<style>
+  @page {
+    size: A4;
+    margin: 20mm 15mm 20mm 15mm;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.5;
+    color: #1f2937;
+    background: #ffffff;
+    padding: 0;
+    margin: 0;
+    font-size: 13px;
+  }
+  h1 {
+    font-size: 24px;
+    color: #111827;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 8px;
+    margin-top: 0;
+  }
+  h2 {
+    font-size: 17px;
+    color: #1e40af;
+    margin-top: 22px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 4px;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 14px;
+    color: #374151;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+  }
+  p, ul, ol {
+    margin-top: 4px;
+    margin-bottom: 8px;
+  }
+  li {
+    margin-bottom: 3px;
+  }
+  code {
+    font-family: "Cascadia Code", Consolas, Monaco, monospace;
+    background-color: #f3f4f6;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #b91c1c;
+  }
+  pre {
+    background-color: #1e293b;
+    color: #f8fafc;
+    padding: 10px 14px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-family: "Cascadia Code", Consolas, Monaco, monospace;
+    font-size: 11.5px;
+    line-height: 1.45;
+    margin: 8px 0;
+    page-break-inside: avoid;
+  }
+  pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 12px;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #cbd5e1;
+    padding: 6px 10px;
+    text-align: left;
+  }
+  th {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    font-weight: 600;
+  }
+  tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .callout {
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    padding: 8px 12px;
+    margin: 10px 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 12px;
+  }
+  .footer-note {
+    margin-top: 30px;
+    padding-top: 10px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 11px;
+    color: #64748b;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>Infiniti Code Technologies – Onboarding Portal</h1>
+<p><span class="badge">Production Deployment Guide</span> &nbsp;|&nbsp; <strong>Database:</strong> Supabase (PostgreSQL) &nbsp;|&nbsp; <strong>Frontend:</strong> Cloudflare Workers &nbsp;|&nbsp; <strong>Backend:</strong> Render PaaS</p>
+
+<h2>1. Overview & Architecture</h2>
+<p>This software is a full-stack employee onboarding portal designed for an HR admin to invite new hires and collect identity documents safely. To deploy it to real users:</p>
+<ul>
+  <li><strong>Database & Storage:</strong> Supabase provides managed PostgreSQL for records and private S3-compatible Object Storage for sensitive employee documents.</li>
+  <li><strong>Backend API:</strong> Node.js + Express + Prisma deployed on a platform like Render or Railway.</li>
+  <li><strong>Frontend & Proxy:</strong> React + Vite deployed on Cloudflare Workers, which acts as a reverse proxy forwarding <code>/api/*</code> requests directly to your backend service without CORS complications.</li>
+  <li><strong>Custom Domain:</strong> <code>onboarding.infiniticodetech.com</code> connected via Wix DNS CNAME.</li>
+</ul>
+
+<h2>2. Step-by-Step Setup</h2>
+
+<h3>Step 1: Set Up Supabase Database & Storage</h3>
+<ol>
+  <li>Log in to <a href="https://supabase.com">supabase.com</a> and click <strong>New Project</strong>. Name it <code>infiniti-onboarding</code>.</li>
+  <li>Set a secure database password (≥ 12 chars). Choose a region closest to your users.</li>
+  <li>Go to <strong>Settings &rarr; Database &rarr; Connection Pooling</strong> and copy the PostgreSQL URI:
+    <pre><code>postgresql://postgres:[YOUR-PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres?sslmode=require</code></pre>
+  </li>
+  <li>Go to <strong>Storage &rarr; Buckets &rarr; New bucket</strong>:
+    <ul>
+      <li>Bucket name: <code>onboarding-docs</code></li>
+      <li>Public bucket: <strong>Disabled</strong> (Keep private for compliance)</li>
+    </ul>
+  </li>
+  <li>Go to <strong>Project Settings &rarr; API</strong> and copy your <code>Project URL</code> and <code>service_role</code> secret key.</li>
+</ol>
+
+<h3>Step 2: Local Verification & Database Migration</h3>
+<p>Run these commands from your local workspace in PowerShell:</p>
+<pre><code># 1. Install dependencies
+cd d:\infiniti_onboarding_cloudflare_worker_fix
+npm install
+npm --prefix client install
+npm --prefix server install
+
+# 2. Configure server/.env
+cp server/.env.example server/.env</code></pre>
+
+<p>Open <code>server/.env</code> and configure your variables:</p>
+<pre><code>PORT=4000
+DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres?sslmode=require"
+JWT_SECRET="generate_a_long_random_secret_with_openssl_rand_hex_32"
+ADMIN_EMAIL="admin@infiniticodetech.com"
+ADMIN_PASSWORD="StrongAdminPassword123!"
+CLIENT_ORIGIN="https://onboarding.infiniticodetech.com"
+COOKIE_SECURE=true
+SUPABASE_URL="https://[PROJECT-REF].supabase.co"
+SUPABASE_SERVICE_ROLE_KEY="[YOUR-SUPABASE-SERVICE-ROLE-KEY]"</code></pre>
+
+<p>Push the Prisma schema to Supabase and seed the initial HR admin user:</p>
+<pre><code>cd server
+npx prisma migrate dev --name init
+npm run seed</code></pre>
+
+<h3>Step 3: Deploy the Backend (Node.js API) to Render</h3>
+<ol>
+  <li>Push your repository to GitHub or GitLab.</li>
+  <li>Go to <a href="https://render.com">render.com</a> &rarr; <strong>New +</strong> &rarr; <strong>Web Service</strong>.</li>
+  <li>Connect your repository and specify:
+    <ul>
+      <li><strong>Root Directory:</strong> <code>server</code></li>
+      <li><strong>Environment:</strong> <code>Node</code></li>
+      <li><strong>Build Command:</strong> <code>npm install && npx prisma generate</code></li>
+      <li><strong>Start Command:</strong> <code>npx prisma migrate deploy && node src/index.js</code></li>
+    </ul>
+  </li>
+  <li>In the <strong>Environment Variables</strong> tab, add the variables from your <code>server/.env</code>:
+    <table>
+      <tr><th>Variable</th><th>Value</th></tr>
+      <tr><td><code>DATABASE_URL</code></td><td>Supabase PostgreSQL connection string</td></tr>
+      <tr><td><code>JWT_SECRET</code></td><td>Your strong JWT secret</td></tr>
+      <tr><td><code>ADMIN_EMAIL</code></td><td>admin@infiniticodetech.com</td></tr>
+      <tr><td><code>ADMIN_PASSWORD</code></td><td>Your strong password</td></tr>
+      <tr><td><code>CLIENT_ORIGIN</code></td><td>https://onboarding.infiniticodetech.com</td></tr>
+      <tr><td><code>COOKIE_SECURE</code></td><td>true</td></tr>
+      <tr><td><code>SUPABASE_URL</code></td><td>https://[PROJECT-REF].supabase.co</td></tr>
+      <tr><td><code>SUPABASE_SERVICE_ROLE_KEY</code></td><td>Your Supabase service role secret</td></tr>
+    </table>
+  </li>
+  <li>Click <strong>Deploy Web Service</strong>. Note your live backend URL (e.g. <code>https://infiniti-backend.onrender.com</code>).</li>
+  <li>In Render's <strong>Shell</strong> tab, run: <code>npm run seed</code> to ensure the initial admin account is active.</li>
+</ol>
+
+<h3>Step 4: Connect Cloudflare Worker & Deploy Frontend</h3>
+<p>Update <code>worker/index.js</code> so it proxies incoming <code>/api/*</code> requests directly to your Render backend:</p>
+<pre><code>export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    if (url.pathname.startsWith("/api/")) {
+      const backendOrigin = env.BACKEND_URL || "https://infiniti-backend.onrender.com";
+      const targetUrl = new URL(url.pathname + url.search, backendOrigin);
+      const headers = new Headers(request.headers);
+      headers.set("Host", new URL(backendOrigin).host);
+      headers.set("X-Forwarded-Host", url.host);
+      headers.set("X-Forwarded-Proto", "https");
+
+      return fetch(new Request(targetUrl, {
+        method: request.method,
+        headers: headers,
+        body: ["GET", "HEAD"].includes(request.method) ? null : request.body,
+        redirect: "manual"
+      }));
+    }
+    return env.ASSETS.fetch(request);
+  }
+};</code></pre>
+
+<p>In <code>wrangler.jsonc</code>, add your backend URL:</p>
+<pre><code>{
+  "name": "infiniti-onboarding-portal",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-11-11",
+  "assets": {
+    "directory": "./client/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "vars": {
+    "BACKEND_URL": "https://infiniti-backend.onrender.com"
+  }
+}</code></pre>
+
+<p>Build and deploy to Cloudflare:</p>
+<pre><code># Login to Cloudflare
+npx wrangler login
+
+# Build Vite client assets
+npm run build
+
+# Deploy Cloudflare Worker
+npm run deploy</code></pre>
+
+<h3>Step 5: Connect Custom Domain on Wix DNS</h3>
+<ol>
+  <li>In the <strong>Cloudflare Dashboard</strong> &rarr; Workers & Pages &rarr; <code>infiniti-onboarding-portal</code> &rarr; <strong>Settings &rarr; Domains & Routes</strong> &rarr; <strong>Add Custom Domain</strong>: enter <code>onboarding.infiniticodetech.com</code>.</li>
+  <li>Log in to your <strong>Wix Domain Manager</strong> &rarr; Select <code>infiniticodetech.com</code> &rarr; <strong>Manage DNS Records</strong>.</li>
+  <li>Add a new <strong>CNAME Record</strong>:
+    <ul>
+      <li><strong>Host Name:</strong> <code>onboarding</code></li>
+      <li><strong>Points To:</strong> The CNAME target indicated by Cloudflare (e.g. <code>infiniti-onboarding-portal.[subdomain].workers.dev</code>)</li>
+      <li><strong>TTL:</strong> 1 Hour (or Automatic)</li>
+    </ul>
+  </li>
+</ol>
+<div class="callout">
+  <strong>Important:</strong> Do NOT modify existing <code>@</code> (A record), <code>www</code>, or MX mail records on Wix. Those power your primary website and company email.
+</div>
+
+<h2>3. Production Checklist & Verification</h2>
+<ul>
+  <li>Visit <code>https://onboarding.infiniticodetech.com</code> in your browser and confirm the SSL padlock is green.</li>
+  <li>Sign in with your <code>ADMIN_EMAIL</code> and <code>ADMIN_PASSWORD</code>.</li>
+  <li>Generate an employee onboarding invite link.</li>
+  <li>Open an incognito tab, follow the invite URL, and complete an onboarding form with test PDF documents.</li>
+  <li>Return to the HR dashboard and verify that document downloads operate through signed URLs from Supabase.</li>
+</ul>
+
+<div class="footer-note">
+  Generated for Infiniti Code Technologies Private Limited &bull; Document Classification: Internal Deployment Standard
+</div>
+
+</body>
+</html>
+

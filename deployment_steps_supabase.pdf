@@ -1,0 +1,296 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 2546 >>
+stream
+BT
+/F1 10 Tf
+ET
+BT
+/F1 18 Tf
+1 0 0 1 50 800 Tm
+(Infiniti Code Technologies - Onboarding Portal) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 50 774 Tm
+(Production Deployment Guide \(Supabase + Cloudflare + Render\)) Tj
+ET
+BT
+/F1 13 Tf
+1 0 0 1 50 751 Tm
+(1. Architecture Overview) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 50 731 Tm
+(- Database: Managed PostgreSQL on Supabase for relational employee records.) Tj
+1 0 0 1 50 716 Tm
+(- Storage: Private Supabase Storage bucket \(onboarding-docs\) for documents.) Tj
+1 0 0 1 50 701 Tm
+(- Backend API: Express / Node.js service hosted on Render PaaS.) Tj
+1 0 0 1 50 686 Tm
+(- Frontend: Vite + React SPA served via Cloudflare Workers.) Tj
+1 0 0 1 50 671 Tm
+(- Domain: onboarding.infiniticodetech.com pointed via CNAME on Wix DNS.) Tj
+ET
+BT
+/F1 13 Tf
+1 0 0 1 50 648 Tm
+(2. Step 1: Set up Supabase Project) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 50 628 Tm
+(1. Go to supabase.com and create a new project named infiniti-onboarding.) Tj
+1 0 0 1 50 613 Tm
+(2. Save the database password securely.) Tj
+1 0 0 1 50 598 Tm
+(3. Copy the Connection Pooling PostgreSQL URI from Settings -> Database.) Tj
+ET
+BT
+/F1 9 Tf
+1 0 0 1 60 583 Tm
+(postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres?sslmode=require) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 50 569 Tm
+(4. In Storage -> Buckets -> Create new private bucket named: onboarding-docs) Tj
+1 0 0 1 50 554 Tm
+(5. In Project Settings -> API -> copy Project URL and service_role secret key.) Tj
+ET
+BT
+/F1 13 Tf
+1 0 0 1 50 531 Tm
+(3. Step 2: Configure Environment Variables) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 50 511 Tm
+(In server/.env configure the following keys:) Tj
+ET
+BT
+/F1 9 Tf
+1 0 0 1 60 496 Tm
+(PORT=4000) Tj
+ET
+BT
+/F1 10 Tf
+ET
+BT
+/F1 9 Tf
+1 0 0 1 60 482 Tm
+(DATABASE_URL="postgresql://postgres:[PASSWORD]@db.[REF].supabase.co:5432/postgres?sslmode=require") Tj
+ET
+BT
+/F1 10 Tf
+ET
+BT
+/F1 9 Tf
+1 0 0 1 60 468 Tm
+(JWT_SECRET="[long-random-secret-generated-by-openssl-rand-hex-32]") Tj
+ET
+BT
+/F1 10 Tf
+ET
+BT
+/F1 9 Tf
+1 0 0 1 60 454 Tm
+(ADMIN_EMAIL="admin@infiniticodetech.com") Tj
+ET
+BT
+/F1 10 Tf
+ET
+BT
+/F1 9 Tf
+1 0 0 1 60 440 Tm
+(ADMIN_PASSWORD="[Minimum 12 character strong password]") Tj
+ET
+BT
+/F1 10 Tf
+ET
+BT
+/F1 9 Tf
+1 0 0 1 60 426 Tm
+(CLIENT_ORIGIN="https://onboarding.infiniticodetech.com") Tj
+ET
+BT
+/F1 10 Tf
+ET
+BT
+/F1 9 Tf
+1 0 0 1 60 412 Tm
+(COOKIE_SECURE=true) Tj
+ET
+BT
+/F1 10 Tf
+ET
+BT
+/F1 9 Tf
+1 0 0 1 60 398 Tm
+(SUPABASE_URL="https://[PROJECT-REF].supabase.co") Tj
+ET
+BT
+/F1 10 Tf
+ET
+BT
+/F1 9 Tf
+1 0 0 1 60 384 Tm
+(SUPABASE_SERVICE_ROLE_KEY="[service_role_secret_key]") Tj
+ET
+BT
+/F1 10 Tf
+ET
+
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 2158 >>
+stream
+BT
+/F1 10 Tf
+ET
+BT
+/F1 13 Tf
+1 0 0 1 50 792 Tm
+(4. Step 3: Run Prisma Migrations and Seed) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 50 772 Tm
+(From the project root on your machine, initialize the Supabase schema:) Tj
+ET
+BT
+/F1 9 Tf
+1 0 0 1 60 757 Tm
+(cd server) Tj
+ET
+BT
+/F1 10 Tf
+ET
+BT
+/F1 9 Tf
+1 0 0 1 60 743 Tm
+(npx prisma migrate dev --name init) Tj
+ET
+BT
+/F1 10 Tf
+ET
+BT
+/F1 9 Tf
+1 0 0 1 60 729 Tm
+(npm run seed) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 50 715 Tm
+(This creates the User, EmployeeProfile, Document, and Invitation tables in Supabase.) Tj
+ET
+BT
+/F1 13 Tf
+1 0 0 1 50 692 Tm
+(5. Step 4: Deploy the Backend API to Render) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 50 672 Tm
+(1. Push this repository to GitHub.) Tj
+1 0 0 1 50 657 Tm
+(2. On render.com, click New + -> Web Service and select your repo.) Tj
+1 0 0 1 50 642 Tm
+(3. Set Root Directory to: server) Tj
+1 0 0 1 50 627 Tm
+(4. Set Build Command to: npm install && npx prisma generate) Tj
+1 0 0 1 50 612 Tm
+(5. Set Start Command to: npx prisma migrate deploy && node src/index.js) Tj
+1 0 0 1 50 597 Tm
+(6. Add the environment variables from server/.env into the Render dashboard.) Tj
+1 0 0 1 50 582 Tm
+(7. Deploy the service and copy your public HTTPS URL \(e.g. https://api.onrender.com\).) Tj
+ET
+BT
+/F1 13 Tf
+1 0 0 1 50 559 Tm
+(6. Step 5: Configure Cloudflare Worker Proxy) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 50 539 Tm
+(Update worker/index.js to proxy /api/* to your Render backend URL.) Tj
+1 0 0 1 50 524 Tm
+(In wrangler.jsonc, set vars.BACKEND_URL to your Render URL.) Tj
+1 0 0 1 50 509 Tm
+(Run the deployment commands:) Tj
+ET
+BT
+/F1 9 Tf
+1 0 0 1 60 494 Tm
+(npx wrangler login) Tj
+ET
+BT
+/F1 10 Tf
+ET
+BT
+/F1 9 Tf
+1 0 0 1 60 480 Tm
+(npm run build) Tj
+ET
+BT
+/F1 10 Tf
+ET
+BT
+/F1 9 Tf
+1 0 0 1 60 466 Tm
+(npm run deploy) Tj
+ET
+BT
+/F1 10 Tf
+ET
+BT
+/F1 13 Tf
+1 0 0 1 50 444 Tm
+(7. Step 6: Connect Domain in Wix DNS) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 50 424 Tm
+(1. In Cloudflare Worker -> Settings -> Domains -> add onboarding.infiniticodetech.com) Tj
+1 0 0 1 50 409 Tm
+(2. In Wix DNS Manager, add a CNAME record with host "onboarding" pointing to Cloudflare.) Tj
+1 0 0 1 50 394 Tm
+(3. Do not modify the existing root @ or www records on Wix.) Tj
+ET
+
+endstream
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000127 00000 n 
+0000000224 00000 n 
+0000000356 00000 n 
+0000002954 00000 n 
+0000003086 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+5296
+%%EOF
