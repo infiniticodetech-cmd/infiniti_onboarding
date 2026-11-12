@@ -3,7 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import './style.css';
 
-const API = '/api';
+// Local development: /api
+// Production: VITE_API_BASE_URL=https://your-render-service.onrender.com
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+const API = `${API_BASE}/api`;
 
 function App() {
   const [inviteToken, setInviteToken] = useState(
@@ -29,7 +32,10 @@ function App() {
   });
 
   const [files, setFiles] = useState([]);
+  const [downloadingId, setDownloadingId] = useState(null);
 
+  // Common API request function.
+  // All authenticated requests include browser cookies.
   async function request(path, opts = {}) {
     const r = await fetch(API + path, {
       credentials: 'include',
@@ -45,7 +51,7 @@ function App() {
     return d;
   }
 
-  // Load employee applications for HR Admin
+  // Load employee applications for HR Admin.
   async function loadEmployees() {
     setLoadingEmployees(true);
 
@@ -59,13 +65,14 @@ function App() {
     }
   }
 
-  // Automatically load employees after Admin login
+  // Automatically load employees after Admin login.
   useEffect(() => {
     if (user?.role === 'ADMIN') {
       loadEmployees();
     }
   }, [user]);
 
+  // Login.
   async function login(e) {
     e.preventDefault();
 
@@ -81,11 +88,12 @@ function App() {
       setUser(d.user);
       setPassword('');
       setMessage('Signed in successfully.');
-    } catch (x) {
-      setMessage(x.message);
+    } catch (error) {
+      setMessage(error.message);
     }
   }
 
+  // Employee invitation activation.
   async function activate(e) {
     e.preventDefault();
 
@@ -120,11 +128,12 @@ function App() {
       setMessage(
         'Your account is activated. Welcome to Infiniti Code!'
       );
-    } catch (x) {
-      setMessage(x.message);
+    } catch (error) {
+      setMessage(error.message);
     }
   }
 
+  // Employee onboarding submission.
   async function save(e) {
     e.preventDefault();
 
@@ -147,11 +156,12 @@ function App() {
       setMessage(
         'Your onboarding information has been submitted for HR review.'
       );
-    } catch (x) {
-      setMessage(x.message);
+    } catch (error) {
+      setMessage(error.message);
     }
   }
 
+  // Create employee invitation.
   async function invite(e) {
     e.preventDefault();
 
@@ -170,12 +180,12 @@ function App() {
       );
 
       setEmail('');
-    } catch (x) {
-      setMessage(x.message);
+    } catch (error) {
+      setMessage(error.message);
     }
   }
 
-  // Approve or request changes
+  // Approve or request changes.
   async function updateStatus(id, status) {
     const confirmation =
       status === 'APPROVED'
@@ -205,6 +215,40 @@ function App() {
     }
   }
 
+  // Secure employee document download.
+  // The backend checks the admin session and returns
+  // a short-lived signed Supabase Storage URL.
+  async function downloadDocument(doc) {
+    setDownloadingId(doc.id);
+    setMessage('');
+
+    try {
+      const result = await request(
+        `/admin/documents/${doc.id}`
+      );
+
+      if (!result.downloadUrl) {
+        throw new Error('Document download URL was not returned.');
+      }
+
+      const link = document.createElement('a');
+      link.href = result.downloadUrl;
+      link.download = result.fileName || doc.fileName;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+    } catch (error) {
+      setMessage(error.message || 'Document download failed.');
+    } finally {
+      setDownloadingId(null);
+    }
+  }
+
+  // Logout.
   async function logout() {
     try {
       await request('/auth/logout', {
@@ -213,9 +257,10 @@ function App() {
 
       setUser(null);
       setEmployees([]);
+      setPassword('');
       setMessage('Signed out successfully.');
-    } catch (x) {
-      setMessage(x.message);
+    } catch (error) {
+      setMessage(error.message);
     }
   }
 
@@ -359,6 +404,7 @@ function App() {
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     required
+                    autoComplete="username"
                   />
 
                   <label>Password</label>
@@ -368,6 +414,7 @@ function App() {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     required
+                    autoComplete="current-password"
                   />
 
                   <button className="primary" type="submit">
@@ -511,13 +558,16 @@ function App() {
 
                                       <p key={doc.id}>
 
-                                        <a
-                                          href={`${API}/admin/documents/${doc.id}`}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
+                                        <button
+                                          type="button"
+                                          className="secondary"
+                                          disabled={downloadingId === doc.id}
+                                          onClick={() => downloadDocument(doc)}
                                         >
-                                          {doc.fileName} — Download
-                                        </a>
+                                          {downloadingId === doc.id
+                                            ? 'Preparing download...'
+                                            : `${doc.fileName} — Download`}
+                                        </button>
 
                                       </p>
 
