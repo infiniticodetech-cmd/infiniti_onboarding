@@ -1,8 +1,64 @@
-generator client { provider = "prisma-client-js" }
-datasource db { provider = "postgresql" url = env("DATABASE_URL") }
-enum Role { ADMIN EMPLOYEE }
-enum Status { INVITED IN_PROGRESS SUBMITTED APPROVED CHANGES_REQUESTED }
-model User { id String @id @default(cuid()) email String @unique passwordHash String role Role @default(EMPLOYEE) createdAt DateTime @default(now()) profile EmployeeProfile? }
-model EmployeeProfile { id String @id @default(cuid()) userId String @unique fullName String? phone String? address String? designation String? joiningDate DateTime? status Status @default(IN_PROGRESS) updatedAt DateTime @updatedAt user User @relation(fields:[userId],references:[id]) documents Document[] }
-model Document { id String @id @default(cuid()) profileId String fileName String mimeType String storageName String createdAt DateTime @default(now()) profile EmployeeProfile @relation(fields:[profileId],references:[id]) }
-model Invitation { id String @id @default(cuid()) email String tokenHash String @unique expiresAt DateTime usedAt DateTime? createdAt DateTime @default(now()) }
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+enum Status {
+  INVITED
+  IN_PROGRESS
+  SUBMITTED
+  APPROVED
+  CHANGES_REQUESTED
+}
+
+model User {
+  id           String           @id @default(cuid())
+  email        String           @unique
+  passwordHash String
+  role         Role             @default(EMPLOYEE)
+  createdAt    DateTime         @default(now())
+  profile      EmployeeProfile?
+}
+
+model EmployeeProfile {
+  id          String     @id @default(cuid())
+  userId      String     @unique
+  fullName    String?
+  phone       String?
+  address     String?
+  designation String?
+  joiningDate DateTime?
+  status      Status     @default(IN_PROGRESS)
+  updatedAt   DateTime   @updatedAt
+  user        User       @relation(fields: [userId], references: [id])
+  documents   Document[]
+}
+
+model Document {
+  id         String          @id @default(cuid())
+  profileId  String
+  fileName   String
+  mimeType   String
+  storageName String
+  createdAt  DateTime        @default(now())
+  profile    EmployeeProfile @relation(fields: [profileId], references: [id])
+}
+
+model Invitation {
+  id        String   @id @default(cuid())
+  email     String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+}

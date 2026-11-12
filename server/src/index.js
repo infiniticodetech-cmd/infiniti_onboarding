@@ -1,5 +1,6 @@
 import 'dotenv/config';
-import express from 'express'; import cors from 'cors'; import helmet from 'helmet'; import cookieParser from 'cookie-parser'; import rateLimit from 'express-rate-limit'; import multer from 'multer'; import bcrypt from 'bcryptjs'; import jwt from 'jsonwebtoken'; import crypto from 'node:crypto'; import fs from 'node:fs'; import path from 'node:path'; import {PrismaClient} from '@prisma/client';
+import express from 'express'; import cors from 'cors'; import helmet from 'helmet'; import cookieParser from 'cookie-parser'; import rateLimit from 'express-rate-limit'; import multer from 'multer'; import bcrypt from 'bcryptjs'; import jwt from 'jsonwebtoken'; import crypto from 'node:crypto'; import fs from 'node:fs'; import path from 'node:path'; 
+import { PrismaClient } from '@prisma/client';
 const app=express(),db=new PrismaClient(),port=process.env.PORT||4000;
 const uploads=path.resolve('private-uploads');fs.mkdirSync(uploads,{recursive:true});
 app.use(helmet());app.use(cors({origin:process.env.CLIENT_ORIGIN,credentials:true}));app.use(express.json({limit:'1mb'}));app.use(cookieParser());app.use('/api',rateLimit({windowMs:15*60*1000,max:100}));
@@ -8,6 +9,105 @@ function auth(req,res,next){try{const t=req.cookies.session;if(!t)throw Error();
 function admin(req,res,next){if(req.user.role!=='ADMIN')return res.status(403).json({error:'Administrator access required'});next()}
 app.get('/api/health',(req,res)=>res.json({ok:true}));
 app.post('/api/auth/login',async(req,res)=>{const {email,password}=req.body||{};const u=await db.user.findUnique({where:{email:String(email||'').toLowerCase()}});if(!u||!await bcrypt.compare(password||'',u.passwordHash))return res.status(401).json({error:'Invalid email or password'});res.cookie('session',jwt.sign({id:u.id,role:u.role},process.env.JWT_SECRET,{expiresIn:'8h'}),cookieOptions);res.json({user:{id:u.id,email:u.email,role:u.role}})});
+
+app.post('/api/auth/accept-invitation', async (req, res) => {
+  try {
+    const token = String(req.body?.token || '');
+    const password = String(req.body?.password || '');
+
+    if (!/^[a-f0-9]{64}$/i.test(token)) {
+      return res.status(400).json({ error: 'Invalid invitation link' });
+    }
+
+    if (password.length < 12) {
+      return res.status(400).json({
+        error: 'Password must be at least 12 characters'
+      });
+    }
+
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+
+    const invitation = await db.invitation.findUnique({
+      where: { tokenHash }
+    });
+
+    if (
+      !invitation ||
+      invitation.usedAt ||
+      invitation.expiresAt <= new Date()
+    ) {
+      return res.status(400).json({
+        error: 'Invitation is invalid, expired, or already used'
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    const user = await db.$transaction(async (tx) => {
+      const current = await tx.invitation.findUnique({
+        where: { id: invitation.id }
+      });
+
+      if (
+        !current ||
+        current.usedAt ||
+        current.expiresAt <= new Date()
+      ) {
+        throw new Error('Invitation is no longer valid');
+      }
+
+      const existing = await tx.user.findUnique({
+        where: { email: current.email }
+      });
+
+      if (existing) {
+        throw new Error('An account already exists for this email');
+      }
+
+      const created = await tx.user.create({
+        data: {
+          email: current.email,
+          passwordHash,
+          role: 'EMPLOYEE'
+        }
+      });
+
+      await tx.invitation.update({
+        where: { id: current.id },
+        data: { usedAt: new Date() }
+      });
+
+      return created;
+    });
+
+    res.cookie(
+      'session',
+      jwt.sign(
+        { id: user.id, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: '8h' }
+      ),
+      cookieOptions
+    );
+
+    res.json({
+      ok: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    res.status(400).json({
+      error: error.message || 'Invitation activation failed'
+    });
+  }
+});
+
 app.post('/api/auth/logout',(req,res)=>res.clearCookie('session',cookieOptions).json({ok:true}));
 app.get('/api/auth/me',auth,async(req,res)=>{const u=await db.user.findUnique({where:{id:req.user.id},select:{id:true,email:true,role:true}});res.json({user:u})});
 app.post('/api/admin/invitations',auth,admin,async(req,res)=>{const email=String(req.body.email||'').toLowerCase();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))return res.status(400).json({error:'Valid email required'});const token=crypto.randomBytes(32).toString('hex'),tokenHash=crypto.createHash('sha256').update(token).digest('hex');await db.invitation.create({data:{email,tokenHash,expiresAt:new Date(Date.now()+7*86400000)}});res.json({inviteUrl:`${process.env.CLIENT_ORIGIN}/?invite=${token}`})});
