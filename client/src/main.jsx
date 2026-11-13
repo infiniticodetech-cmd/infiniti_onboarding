@@ -2,8 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import './style.css';
 
+
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 const API = `${API_BASE}/api`;
+
 
 // ─── API HELPER ───────────────────────────────────────────────────────────────
 async function request(path, opts = {}) {
@@ -90,6 +92,45 @@ function Header({ user, onLogout, portalLabel }) {
   );
 }
 
+// Reusable password input with an independent show/hide eye button.
+function PasswordInput({ value, onChange, placeholder, autoComplete, required = false }) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div className="password-input-wrap">
+      <input
+        type={visible ? 'text' : 'password'}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        required={required}
+        autoComplete={autoComplete}
+        className="password-input"
+      />
+      <button
+        type="button"
+        className="password-toggle"
+        onClick={() => setVisible(current => !current)}
+        aria-label={visible ? 'Hide password' : 'Show password'}
+        aria-pressed={visible}
+        title={visible ? 'Hide password' : 'Show password'}
+      >
+        {visible ? (
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 3l18 18M10.6 10.6a2 2 0 002.8 2.8" />
+            <path d="M9.9 5.2A10.8 10.8 0 0112 5c5.2 0 9 4.8 10 7-.4.9-1.4 2.3-2.8 3.6M6.2 6.2C3.9 7.7 2.5 10 2 12c1 2.2 4.8 7 10 7 1.2 0 2.3-.3 3.3-.7" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        )}
+      </button>
+    </div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // VIEW: LOGIN PAGE (HR Admin + Employee tabs)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -99,6 +140,7 @@ function LoginPage({ onLogin }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -173,8 +215,7 @@ function LoginPage({ onLogin }) {
             </div>
             <div className="field">
               <label>Password</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -246,8 +287,7 @@ function ActivationPage({ token, onActivated }) {
           <form onSubmit={handleActivate}>
             <div className="field">
               <label>Create password <em>*</em></label>
-              <input
-                type="password"
+              <PasswordInput
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Minimum 8 characters"
@@ -257,8 +297,7 @@ function ActivationPage({ token, onActivated }) {
             </div>
             <div className="field">
               <label>Confirm password <em>*</em></label>
-              <input
-                type="password"
+              <PasswordInput
                 value={confirm}
                 onChange={e => setConfirm(e.target.value)}
                 placeholder="Re-enter password"

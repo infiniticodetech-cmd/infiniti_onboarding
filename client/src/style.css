@@ -1975,3 +1975,54 @@ footer {
     width: 100%;
   }
 }
+
+
+/* PASSWORD VISIBILITY TOGGLE */
+.password-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.field .password-input-wrap input.password-input {
+  width: 100%;
+  padding-right: 48px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.password-toggle:hover {
+  color: #c084fc;
+  background: rgba(168, 85, 247, 0.12);
+}
+
+.password-toggle:focus-visible {
+  outline: 2px solid var(--brand-blue);
+  outline-offset: 2px;
+}
+
+.password-toggle svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
