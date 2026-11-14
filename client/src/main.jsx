@@ -17,14 +17,18 @@ async function request(path, opts = {}) {
 
 // ─── DOCUMENT TYPES (Step 3) ──────────────────────────────────────────────────
 const DOC_CONFIGS = [
-  { key: 'pan',          label: 'PAN Card',                    required: true,  category: 'identity',    accept: '.pdf,.jpg,.jpeg,.png', hint: 'PDF, JPG or PNG', icon: '💳' },
-  { key: 'identity',     label: 'Identity Proof',              required: true,  category: 'identity',    accept: '.pdf,.jpg,.jpeg,.png', hint: 'Aadhaar / Passport / Voter ID', icon: '🆔' },
-  { key: 'photo',        label: 'Passport-size Photo',         required: true,  category: 'identity',    accept: '.jpg,.jpeg,.png',      hint: 'Recent formal photo (JPG/PNG)', icon: '📷' },
-  { key: 'resume',       label: 'Resume / CV',                 required: true,  category: 'identity',    accept: '.pdf,.doc,.docx',      hint: 'Updated CV (PDF preferred)', icon: '📄' },
-  { key: 'education',    label: 'Educational Certificates',    required: true,  category: 'employment',  accept: '.pdf,.jpg,.jpeg,.png', hint: 'Degree / provisional certificates', icon: '🎓' },
-  { key: 'experienceDoc',label: 'Experience / Relieving Letter', required: true, category: 'employment', accept: '.pdf,.jpg,.jpeg,.png', hint: 'If applicable for experienced hires', icon: '💼' },
-  { key: 'offer',        label: 'Signed Offer Letter',         required: false, category: 'employment',  accept: '.pdf,.jpg,.jpeg,.png', hint: 'Signed copy, if requested by HR', icon: '📑' },
-  { key: 'bank',         label: 'Bank Proof',                  required: true, category: 'employment',  accept: '.pdf,.jpg,.jpeg,.png', hint: 'Cancelled cheque / passbook', icon: '🏦' },
+  { key: 'pan',          label: 'PAN Card',                       required: true,  category: 'identity',  accept: '.pdf,.jpg,.jpeg,.png', hint: 'PDF, JPG or PNG', icon: '💳' },
+  { key: 'identity',     label: 'Identity Proof',                 required: true,  category: 'identity',  accept: '.pdf,.jpg,.jpeg,.png', hint: 'Aadhaar / Passport / Voter ID', icon: '🆔' },
+  { key: 'photo',        label: 'Passport-size Photo',            required: true,  category: 'identity',  accept: '.jpg,.jpeg,.png',      hint: 'Recent formal photo (JPG/PNG)', icon: '📷' },
+  { key: 'resume',       label: 'Resume / CV',                    required: true,  category: 'identity',  accept: '.pdf,.doc,.docx',      hint: 'Updated CV (PDF preferred)', icon: '📄' },
+  { key: 'education10',  label: '10th Certificate',               required: true, category: 'education', accept: '.pdf,.jpg,.jpeg,.png', hint: 'Upload your 10th standard certificate', icon: '🎓' },
+  { key: 'education12',  label: '12th Certificate',               required: true, category: 'education', accept: '.pdf,.jpg,.jpeg,.png', hint: 'Upload your 12th standard certificate', icon: '🎓' },
+  { key: 'graduation',   label: 'Graduation Certificate',         required: true, category: 'education', accept: '.pdf,.jpg,.jpeg,.png', hint: 'Degree / provisional certificate', icon: '🎓' },
+  { key: 'nda',          label: 'Non-Disclosure Agreement (NDA)', required: false, category: 'job',       accept: '.pdf,.jpg,.jpeg,.png', hint: 'Upload the signed NDA', icon: '📝' },
+  { key: 'offer',        label: 'Signed Offer Letter',            required: false, category: 'job',       accept: '.pdf,.jpg,.jpeg,.png', hint: 'Upload your signed offer letter', icon: '📑' },
+  { key: 'experienceDoc',label: 'Experience / Relieving Letter',   required: false, category: 'job',       accept: '.pdf,.jpg,.jpeg,.png', hint: 'If applicable for experienced hires', icon: '💼' },
+  { key: 'bank',         label: 'Bank Proof',                       required: true, category: 'job',       accept: '.pdf,.jpg,.jpeg,.png', hint: 'Cancelled cheque / passbook', icon: '🏦' },
+  { key: 'other',        label: 'Other Supporting Document',      required: false, category: 'other',     accept: '.pdf,.jpg,.jpeg,.png,.doc,.docx', hint: 'Any additional document requested by HR', icon: '📎' },
 ];
 
 function fmt(bytes) {
@@ -743,7 +747,8 @@ function OnboardingWizard({ user, onLogout, existingProfile }) {
       if (!docFiles.identity) miss.push('Identity Proof');
       if (!docFiles.photo) miss.push('Passport-size Photo');
       if (!docFiles.resume) miss.push('Resume / CV');
-      if (!docFiles.education) miss.push('Educational Certificates');
+      const hasEducationCertificate = Boolean(docFiles.education10 || docFiles.education12 || docFiles.graduation);
+      if (!hasEducationCertificate) miss.push('at least one Education Certificate (10th, 12th or Graduation)');
       if (miss.length) return setError(`Please upload: ${miss.join(', ')}`), false;
     }
     if (step === 3) {
@@ -921,13 +926,16 @@ function OnboardingWizard({ user, onLogout, existingProfile }) {
                   <div className="required-badge"><b>*</b> Required</div>
                 </div>
 
-                {['identity', 'employment'].map(cat => (
-                  <div key={cat}>
-                    <div className="section-label">
-                      {cat === 'identity' ? 'Identity & Profile' : 'Education & Employment'}
-                    </div>
+                {[
+                  { key: 'identity', label: 'Identity & Profile' },
+                  { key: 'education', label: 'Education Certificates' },
+                  { key: 'job', label: 'Job Certificates' },
+                  { key: 'other', label: 'Other' },
+                ].map(cat => (
+                  <div key={cat.key}>
+                    <div className="section-label">{cat.label}</div>
                     <div className="uploads-grid">
-                      {DOC_CONFIGS.filter(d => d.category === cat).map(doc => {
+                      {DOC_CONFIGS.filter(d => d.category === cat.key).map(doc => {
                         const file = docFiles[doc.key];
                         return (
                           <label key={doc.key} className={`upload-card ${file ? 'has-file' : ''}`}>
